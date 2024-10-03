@@ -154,15 +154,27 @@ sub getpwd() {
   return readlink("/proc/self/cwd");
 };
 sub update() {
-  open(STDOUT,">$data{fn}.new");
-  open(STDIN,"apt-file search /|");
-  local($\)="";
-  while(<STDIN>){
-    print;
+  my $pid=fork();
+  if($pid) {
+    use POSIX qw(:sys_wait_h);
+    my $res=0;
+    my $kid;
+    do {
+      $?=0;
+      $kid = waitpid($pid,0);
+      die "kid: $kid: $?\n" if $?;
+    } while($kid>0);
+    {
+      no autodie qw(rename);
+      rename("$data{fn}",     "$data{fn}.old");
+    };
+    rename("$data{fn}.new", "$data{fn}"    );
+    exit($res);
   };
-  if( -e "$data{fn}" ) {
-    rename("$data{fn}",     "$data{fn}.old");
-  }
-  rename("$data{fn}.new", "$data{fn}"    );
+  open(STDOUT,">$data{fn}.new");
+  open(STDIN,"</dev/null");
+  my @cmd = qw(apt-file search /);
+  exec @cmd;
+  die "exec(", @cmd, ")=>", $!;
   return 0;
 };
