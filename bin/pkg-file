@@ -17,10 +17,6 @@ use vars qw( %data );
 $data{fn}="/var/cache/apt/apt-file-search-slash";
 
 sub cat(@);
-sub set_type() {
-  die "type already specified, got '$_'" if defined($data{type});
-  $data{type}=$_;
-};
 
 sub version {
   print "$0 version 0.2.0\n";
